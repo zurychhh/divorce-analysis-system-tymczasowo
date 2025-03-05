@@ -45,7 +45,7 @@ interface DetailedFormData {
   hasAttorney: boolean;
 }
 
-interface DivorceFormDetailedProps {
+export interface DivorceFormDetailedProps {
   formData: DetailedFormData;
   onDataUpdate: (data: Record<string, any>) => void;
   onProgressChange: (progress: number) => void;

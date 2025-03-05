@@ -15,7 +15,7 @@ const MOCK_DATA = {
  }
 };
 
-const USE_MOCK = false; // Toggle between mock/real data
+const USE_MOCK = true; // Zmiana na true do celów rozwojowych
 
 const useGUSData = ({ dataType }: UseGUSDataProps) => {
  const [data, setData] = useState(null);
@@ -37,8 +37,11 @@ const useGUSData = ({ dataType }: UseGUSDataProps) => {
        setData(result);
        setLoading(false);
      } catch (err) {
+       console.error("Error fetching GUS data:", err);
        setError(err);
        setLoading(false);
+       // Fallback do danych mockowych w przypadku błędu
+       setData(MOCK_DATA[dataType]);
      }
    };
 

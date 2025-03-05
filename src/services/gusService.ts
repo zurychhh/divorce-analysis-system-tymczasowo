@@ -26,13 +26,22 @@ class GUSApiService {
       });
       
       if (!response.ok) {
+        console.error(`API error: ${response.status}`);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       return await response.json();
     } catch (error) {
       console.error('Error fetching divorce data:', error);
-      throw error;
+      // Return mock data in case of error
+      return {
+        data: [],
+        meta: {
+          totalRecords: 0,
+          pageSize: 10,
+          pageNumber: 1
+        }
+      };
     }
   }
 
@@ -46,13 +55,22 @@ class GUSApiService {
       });
       
       if (!response.ok) {
+        console.error(`API error: ${response.status}`);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       return await response.json();
     } catch (error) {
       console.error('Error fetching marriage duration stats:', error);
-      throw error;
+      // Return mock data in case of error
+      return {
+        data: [],
+        meta: {
+          totalRecords: 0,
+          pageSize: 10,
+          pageNumber: 1
+        }
+      };
     }
   }
 
@@ -66,13 +84,22 @@ class GUSApiService {
       });
       
       if (!response.ok) {
+        console.error(`API error: ${response.status}`);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       return await response.json();
     } catch (error) {
       console.error('Error fetching household assets data:', error);
-      throw error;
+      // Return mock data in case of error
+      return {
+        data: [],
+        meta: {
+          totalRecords: 0,
+          pageSize: 10,
+          pageNumber: 1
+        }
+      };
     }
   }
 
@@ -86,13 +113,22 @@ class GUSApiService {
       });
       
       if (!response.ok) {
+        console.error(`API error: ${response.status}`);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       return await response.json();
     } catch (error) {
       console.error('Error fetching child custody stats:', error);
-      throw error;
+      // Return mock data in case of error
+      return {
+        data: [],
+        meta: {
+          totalRecords: 0,
+          pageSize: 10,
+          pageNumber: 1
+        }
+      };
     }
   }
 }
