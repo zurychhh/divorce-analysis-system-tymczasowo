@@ -14,20 +14,35 @@ interface DetailedFormData {
   currentLivingSituation: string;
   violencePresent: boolean;
   addictionsPresent: boolean;
+  mentalIssues: boolean;
+  incomeDifference: string;
+  propertyDisputes: boolean;
+  childSupportNeeded: boolean;
+  alimonyRequested: boolean;
+  custodyArrangement: string;
+  priorMarriages: string;
+  timeSeparated: string;
+  hasLawyer: boolean;
+  mediationTried: boolean;
+  domesticViolenceHistory: boolean;
+  substanceAbuseHistory: boolean;
   documentedInfidelity: boolean;
   mediationAttempts: boolean;
-  // Nowe pola finansowe
+  // Finansowe i wsparcie
   monthlyIncome: string;
   monthlyCosts: string;
   debts: string;
   creditHistory: string;
-  // Nowe pola wsparcia
   socialSupport: boolean;
   psychologicalSupport: boolean;
   legalAid: boolean;
   jobAssistance: boolean;
   housingAssistance: boolean;
   childcareSupport: boolean;
+  childrenCount: string;
+  marriageLength: string;
+  separationLength: string;
+  hasAttorney: boolean;
 }
 
 interface DivorceFormDetailedProps {
@@ -51,6 +66,18 @@ const DivorceFormDetailed = ({
       "currentLivingSituation",
       "violencePresent",
       "addictionsPresent",
+      "mentalIssues",
+      "incomeDifference",
+      "propertyDisputes",
+      "childSupportNeeded",
+      "alimonyRequested",
+      "custodyArrangement",
+      "priorMarriages",
+      "timeSeparated",
+      "hasLawyer",
+      "mediationTried",
+      "domesticViolenceHistory",
+      "substanceAbuseHistory",
       "documentedInfidelity",
       "mediationAttempts",
       "monthlyIncome",
@@ -62,7 +89,11 @@ const DivorceFormDetailed = ({
       "legalAid",
       "jobAssistance",
       "housingAssistance",
-      "childcareSupport"
+      "childcareSupport",
+      "childrenCount",
+      "marriageLength",
+      "separationLength",
+      "hasAttorney"
     ] as const;
     
     const filled = detailedFields.filter(field => {
