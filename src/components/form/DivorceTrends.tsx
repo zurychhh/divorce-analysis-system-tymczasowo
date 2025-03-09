@@ -4,44 +4,101 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 const DivorceTrends = ({ selectedRegion }) => {
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+    
     fetch("/api/gus")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        return res.json();
+      })
       .then(response => {
-        if (response.status === "success") {
-          // Konwertujemy nazwę regionu do formatu z API
+        if (response.status === "success" || response.fallbackData) {
+          // Normalize selected region name for comparison
           const normalizedRegion = selectedRegion.toUpperCase();
           
-          const chartData = response.metadata.years
-            .sort((a, b) => b - a)
+          // Create chart data with years as data points
+          const chartData = (response.metadata?.years || [])
+            .sort((a, b) => a - b)
             .map(year => {
               const yearData = { year: year.toString() };
               
-              // Znajdujemy dane dla wybranego województwa
-              const regionData = Object.values(response.data)
-                .find(r => r.name.toUpperCase() === normalizedRegion);
+              // Find data for selected region
+              const regionData = Object.values(response.data || {})
+                .find((r) => r.name?.toUpperCase() === normalizedRegion);
               
               if (regionData) {
-                // Dane dla wybranego województwa
+                // Add data for selected region
                 yearData[regionData.name] = Number(regionData.values[year]) || 0;
                 
-                // Obliczamy średnią krajową
+                // Calculate national average
                 const allValues = Object.values(response.data)
-                  .map(r => Number(r.values[year]) || 0);
-                const average = Math.round(allValues.reduce((a, b) => a + b, 0) / allValues.length);
-                yearData["ŚREDNIA KRAJOWA"] = average;
+                  .map((r) => Number(r.values[year]) || 0)
+                  .filter(v => !isNaN(v));
+                
+                if (allValues.length > 0) {
+                  const average = Math.round(allValues.reduce((a, b) => a + b, 0) / allValues.length);
+                  yearData["ŚREDNIA KRAJOWA"] = average;
+                }
               }
               
               return yearData;
             });
           
           setData(chartData);
+        } else {
+          throw new Error(response.message || "Unknown API error");
         }
+      })
+      .catch(err => {
+        console.error("Error fetching divorce data:", err);
+        setError(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, [selectedRegion]);
 
-  if (!data) return null;
+  if (loading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="animate-pulse text-center p-4">
+          <p className="text-gray-500 dark:text-gray-400">Ładowanie danych...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center p-4">
+          <p className="text-red-500 dark:text-red-400">
+            Wystąpił błąd: {error}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            Spróbuj odświeżyć stronę lub wybierz inne województwo.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center p-4">
+          <p className="text-gray-500 dark:text-gray-400">
+            Brak danych dla województwa {selectedRegion}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -59,7 +116,7 @@ const DivorceTrends = ({ selectedRegion }) => {
               type="monotone"
               dataKey={key}
               stroke={key === "ŚREDNIA KRAJOWA" ? "#888" : "#ff0000"}
-              strokeWidth={2}
+              strokeWidth={key === "ŚREDNIA KRAJOWA" ? 1 : 2}
               dot
             />
           ))}
