@@ -3,20 +3,9 @@
 import React, { useState } from 'react'
 import DivorceForm from '@/components/form/DivorceForm'
 import DivorceFormDetailed from '@/components/form/DivorceFormDetailed'
-import dynamic from 'next/dynamic'
+import SimpleTrends from '@/components/form/SimpleTrends'
+import DivorceTrends from '@/components/form/DivorceTrends'
 import { Button } from "@/components/ui/button"
-
-// Dynamiczne importowanie komponentu DivorceTrends z wyłączonym SSR
-const DivorceTrends = dynamic(() => import('@/components/form/DivorceTrends'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-96 bg-black/5 dark:bg-white/5 rounded-lg p-4 flex items-center justify-center">
-      <div className="animate-pulse text-center">
-        <p className="text-gray-500 dark:text-gray-400">Ładowanie wykresu trendów...</p>
-      </div>
-    </div>
-  )
-});
 
 export default function FormPage({ params }: { params: { voivodeship: string } }) {
   const { voivodeship } = params
@@ -86,9 +75,17 @@ export default function FormPage({ params }: { params: { voivodeship: string } }
           </span>
         </h1>
         
-        {/* Wykres trendów rozwodowych */}
-        <div className="w-full h-96 bg-black/5 dark:bg-white/5 rounded-lg p-4 overflow-hidden">
-          <DivorceTrends selectedRegion={decodedVoivodeship} />
+        {/* Testowe wykresy */}
+        <div className="w-full space-y-8">
+          {/* Prosty testowy wykres */}
+          <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg p-4 overflow-hidden border-2 border-blue-500">
+            <SimpleTrends />
+          </div>
+          
+          {/* Właściwy wykres rozwodów - dodany dla porównania */}
+          <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg p-4 overflow-hidden border-2 border-red-500">
+            <DivorceTrends selectedRegion={decodedVoivodeship} />
+          </div>
         </div>
         
         <div className="w-full max-w-2xl">
