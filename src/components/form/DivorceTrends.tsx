@@ -6,24 +6,41 @@ interface DivorceTrendsProps {
   selectedRegion: string;
 }
 
+const mockData = [
+  { year: "2015", "DOLNOŚLĄSKIE": 1500, "ŚREDNIA KRAJOWA": 1200 },
+  { year: "2016", "DOLNOŚLĄSKIE": 1550, "ŚREDNIA KRAJOWA": 1250 },
+  { year: "2017", "DOLNOŚLĄSKIE": 1600, "ŚREDNIA KRAJOWA": 1300 },
+  { year: "2018", "DOLNOŚLĄSKIE": 1650, "ŚREDNIA KRAJOWA": 1350 },
+  { year: "2019", "DOLNOŚLĄSKIE": 1700, "ŚREDNIA KRAJOWA": 1400 },
+  { year: "2020", "DOLNOŚLĄSKIE": 1750, "ŚREDNIA KRAJOWA": 1450 },
+  { year: "2021", "DOLNOŚLĄSKIE": 1800, "ŚREDNIA KRAJOWA": 1500 },
+  { year: "2022", "DOLNOŚLĄSKIE": 1850, "ŚREDNIA KRAJOWA": 1550 },
+];
+
 const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [useMock, setUseMock] = useState(false);
 
   useEffect(() => {
+    console.log("DivorceTrends - Fetching data for region:", selectedRegion);
     setLoading(true);
     setError(null);
     
+    // Próba pobrania danych z API
     fetch("/api/gus")
       .then(res => {
+        console.log("API Response status:", res.status);
         if (!res.ok) throw new Error(`API error: ${res.status}`);
         return res.json();
       })
       .then(response => {
+        console.log("API Response data:", response);
         if (response.status === "success" || response.fallbackData) {
           // Normalize selected region name for comparison
           const normalizedRegion = selectedRegion.toUpperCase();
+          console.log("Normalized region:", normalizedRegion);
           
           // Create chart data with years as data points
           const chartData = (response.metadata?.years || [])
@@ -34,6 +51,8 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
               // Find data for selected region
               const regionData = Object.values(response.data || {})
                 .find((r: any) => r.name?.toUpperCase() === normalizedRegion);
+              
+              console.log("Region data for year", year, ":", regionData);
               
               if (regionData) {
                 // Add data for selected region
@@ -53,6 +72,7 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
               return yearData;
             });
           
+          console.log("Processed chart data:", chartData);
           setData(chartData);
         } else {
           throw new Error(response.message || "Unknown API error");
@@ -61,6 +81,10 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
       .catch(err => {
         console.error("Error fetching divorce data:", err);
         setError(err.message);
+        // Fallback do mockowanych danych
+        console.log("Using mock data as fallback");
+        setUseMock(true);
+        setData(mockData);
       })
       .finally(() => {
         setLoading(false);
@@ -77,7 +101,7 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
     );
   }
 
-  if (error) {
+  if (error && !useMock) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center p-4">
@@ -104,28 +128,37 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
     );
   }
 
+  const chartData = useMock ? mockData : data;
+  
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="year" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        {Object.keys(data[0])
-          .filter(key => key !== "year")
-          .map((key) => (
-            <Line
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={key === "ŚREDNIA KRAJOWA" ? "#888" : "#ff0000"}
-              strokeWidth={key === "ŚREDNIA KRAJOWA" ? 1 : 2}
-              dot
-            />
-          ))}
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="w-full h-full">
+      {useMock && (
+        <div className="mb-2 p-2 text-sm text-yellow-600 bg-yellow-100 rounded dark:bg-yellow-900 dark:text-yellow-300">
+          Używamy danych przykładowych. Dane z API są niedostępne.
+        </div>
+      )}
+      <ResponsiveContainer width="100%" height={useMock ? "90%" : "100%"}>
+        <LineChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="year" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          {Object.keys(chartData[0])
+            .filter(key => key !== "year")
+            .map((key) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                stroke={key === "ŚREDNIA KRAJOWA" ? "#888" : "#ff0000"}
+                strokeWidth={key === "ŚREDNIA KRAJOWA" ? 1 : 2}
+                dot
+              />
+            ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 

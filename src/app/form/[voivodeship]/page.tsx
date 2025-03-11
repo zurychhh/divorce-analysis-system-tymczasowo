@@ -3,8 +3,20 @@
 import React, { useState } from 'react'
 import DivorceForm from '@/components/form/DivorceForm'
 import DivorceFormDetailed from '@/components/form/DivorceFormDetailed'
-import DivorceTrends from '@/components/form/DivorceTrends'
+import dynamic from 'next/dynamic'
 import { Button } from "@/components/ui/button"
+
+// Dynamiczne importowanie komponentu DivorceTrends z wyłączonym SSR
+const DivorceTrends = dynamic(() => import('@/components/form/DivorceTrends'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-96 bg-black/5 dark:bg-white/5 rounded-lg p-4 flex items-center justify-center">
+      <div className="animate-pulse text-center">
+        <p className="text-gray-500 dark:text-gray-400">Ładowanie wykresu trendów...</p>
+      </div>
+    </div>
+  )
+});
 
 export default function FormPage({ params }: { params: { voivodeship: string } }) {
   const { voivodeship } = params
@@ -75,7 +87,7 @@ export default function FormPage({ params }: { params: { voivodeship: string } }
         </h1>
         
         {/* Wykres trendów rozwodowych */}
-        <div className="w-full h-96 bg-black/5 dark:bg-white/5 rounded-lg p-4">
+        <div className="w-full h-96 bg-black/5 dark:bg-white/5 rounded-lg p-4 overflow-hidden">
           <DivorceTrends selectedRegion={decodedVoivodeship} />
         </div>
         
