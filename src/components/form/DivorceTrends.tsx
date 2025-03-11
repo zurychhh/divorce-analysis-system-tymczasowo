@@ -2,7 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-const DivorceTrends = ({ selectedRegion }) => {
+interface DivorceTrendsProps {
+  selectedRegion: string;
+}
+
+const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +33,7 @@ const DivorceTrends = ({ selectedRegion }) => {
               
               // Find data for selected region
               const regionData = Object.values(response.data || {})
-                .find((r) => r.name?.toUpperCase() === normalizedRegion);
+                .find((r: any) => r.name?.toUpperCase() === normalizedRegion);
               
               if (regionData) {
                 // Add data for selected region
@@ -37,7 +41,7 @@ const DivorceTrends = ({ selectedRegion }) => {
                 
                 // Calculate national average
                 const allValues = Object.values(response.data)
-                  .map((r) => Number(r.values[year]) || 0)
+                  .map((r: any) => Number(r.values[year]) || 0)
                   .filter(v => !isNaN(v));
                 
                 if (allValues.length > 0) {

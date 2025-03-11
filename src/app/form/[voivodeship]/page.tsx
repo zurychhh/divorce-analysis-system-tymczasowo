@@ -1,16 +1,17 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import DivorceForm from '@/components/form/DivorceForm'
 import DivorceFormDetailed from '@/components/form/DivorceFormDetailed'
+import DivorceTrends from '@/components/form/DivorceTrends'
 import { Button } from "@/components/ui/button"
 
 export default function FormPage({ params }: { params: { voivodeship: string } }) {
   const { voivodeship } = params
   const decodedVoivodeship = decodeURIComponent(voivodeship)
-  const [progress, setProgress] = React.useState(0)
-  const [showDetailed, setShowDetailed] = React.useState(false)
-  const [formData, setFormData] = React.useState({
+  const [progress, setProgress] = useState(0)
+  const [showDetailed, setShowDetailed] = useState(false)
+  const [formData, setFormData] = useState({
     marriageLength: "",
     childrenCount: "",
     mainDivorceCause: "",
@@ -18,7 +19,7 @@ export default function FormPage({ params }: { params: { voivodeship: string } }
     housingStatus: ""
   })
   
-  const [detailedFormData, setDetailedFormData] = React.useState({
+  const [detailedFormData, setDetailedFormData] = useState({
     custodyPreference: "",
     previousMarriages: "",
     separationLength: "",
@@ -33,7 +34,7 @@ export default function FormPage({ params }: { params: { voivodeship: string } }
     alimonyExpected: false
   })
 
-  const [detailedProgress, setDetailedProgress] = React.useState(40)
+  const [detailedProgress, setDetailedProgress] = useState(40)
 
   const handleDataUpdate = (data: any) => {
     setFormData(prev => ({ ...prev, ...data }))
@@ -72,6 +73,12 @@ export default function FormPage({ params }: { params: { voivodeship: string } }
             Województwo {decodedVoivodeship}
           </span>
         </h1>
+        
+        {/* Wykres trendów rozwodowych */}
+        <div className="w-full h-96 bg-black/5 dark:bg-white/5 rounded-lg p-4">
+          <DivorceTrends selectedRegion={decodedVoivodeship} />
+        </div>
+        
         <div className="w-full max-w-2xl">
           {showDetailed ? (
             <>
@@ -164,4 +171,4 @@ export default function FormPage({ params }: { params: { voivodeship: string } }
       </div>
     </div>
   )
-} 
+}

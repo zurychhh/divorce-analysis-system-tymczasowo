@@ -1,6 +1,6 @@
 export async function GET(request: Request) {
   const API_URL = "https://bdl.stat.gov.pl/api/v1";
-  const VARIABLE_ID = 6;
+  const VARIABLE_ID = 6; // ID zmiennej dla rozwodów w GUS
   const YEARS = [2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015];
   
   try {
@@ -36,6 +36,11 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    return Response.json({ status: "error", message: error.message }, { status: 500 });
+    console.error("Error fetching GUS data:", error);
+    // Zwracamy błąd bez danych zapasowych
+    return Response.json({ 
+      status: "error", 
+      message: error.message
+    }, { status: 500 });
   }
 }
