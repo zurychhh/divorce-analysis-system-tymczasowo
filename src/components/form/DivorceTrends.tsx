@@ -1,99 +1,25 @@
 "use client"
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useDivorceData } from "@/hooks/useDivorceData";
 
 interface DivorceTrendsProps {
   selectedRegion: string;
 }
 
-const mockData = [
-  { year: "2015", "DOLNOŚLĄSKIE": 1500, "ŚREDNIA KRAJOWA": 1200 },
-  { year: "2016", "DOLNOŚLĄSKIE": 1550, "ŚREDNIA KRAJOWA": 1250 },
-  { year: "2017", "DOLNOŚLĄSKIE": 1600, "ŚREDNIA KRAJOWA": 1300 },
-  { year: "2018", "DOLNOŚLĄSKIE": 1650, "ŚREDNIA KRAJOWA": 1350 },
-  { year: "2019", "DOLNOŚLĄSKIE": 1700, "ŚREDNIA KRAJOWA": 1400 },
-  { year: "2020", "DOLNOŚLĄSKIE": 1750, "ŚREDNIA KRAJOWA": 1450 },
-  { year: "2021", "DOLNOŚLĄSKIE": 1800, "ŚREDNIA KRAJOWA": 1500 },
-  { year: "2022", "DOLNOŚLĄSKIE": 1850, "ŚREDNIA KRAJOWA": 1550 },
-];
-
+/**
+ * Komponent do wyświetlania wykresów trendów rozwodowych
+ * 
+ * @param selectedRegion - Wybrane województwo
+ */
 const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [useMock, setUseMock] = useState(false);
+  // Użyj hooka do pobierania danych
+  const { data, status, error, refetch } = useDivorceData(selectedRegion);
 
-  useEffect(() => {
-    console.log("DivorceTrends - Fetching data for region:", selectedRegion);
-    setLoading(true);
-    setError(null);
-    
-    // Próba pobrania danych z API
-    fetch("/api/gus")
-      .then(res => {
-        console.log("API Response status:", res.status);
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-        return res.json();
-      })
-      .then(response => {
-        console.log("API Response data:", response);
-        if (response.status === "success" || response.fallbackData) {
-          // Normalize selected region name for comparison
-          const normalizedRegion = selectedRegion.toUpperCase();
-          console.log("Normalized region:", normalizedRegion);
-          
-          // Create chart data with years as data points
-          const chartData = (response.metadata?.years || [])
-            .sort((a, b) => a - b)
-            .map(year => {
-              const yearData = { year: year.toString() };
-              
-              // Find data for selected region
-              const regionData = Object.values(response.data || {})
-                .find((r: any) => r.name?.toUpperCase() === normalizedRegion);
-              
-              console.log("Region data for year", year, ":", regionData);
-              
-              if (regionData) {
-                // Add data for selected region
-                yearData[regionData.name] = Number(regionData.values[year]) || 0;
-                
-                // Calculate national average
-                const allValues = Object.values(response.data)
-                  .map((r: any) => Number(r.values[year]) || 0)
-                  .filter(v => !isNaN(v));
-                
-                if (allValues.length > 0) {
-                  const average = Math.round(allValues.reduce((a, b) => a + b, 0) / allValues.length);
-                  yearData["ŚREDNIA KRAJOWA"] = average;
-                }
-              }
-              
-              return yearData;
-            });
-          
-          console.log("Processed chart data:", chartData);
-          setData(chartData);
-        } else {
-          throw new Error(response.message || "Unknown API error");
-        }
-      })
-      .catch(err => {
-        console.error("Error fetching divorce data:", err);
-        setError(err.message);
-        // Fallback do mockowanych danych
-        console.log("Using mock data as fallback");
-        setUseMock(true);
-        setData(mockData);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [selectedRegion]);
-
-  if (loading) {
+  // Renderowanie stanu ładowania
+  if (status === 'loading') {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center" role="status" aria-live="polite">
         <div className="animate-pulse text-center p-4">
           <p className="text-gray-500 dark:text-gray-400">Ładowanie danych...</p>
         </div>
@@ -101,9 +27,10 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
     );
   }
 
-  if (error && !useMock) {
+  // Renderowanie stanu błędu
+  if (status === 'error') {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center" role="alert" aria-live="assertive">
         <div className="text-center p-4">
           <p className="text-red-500 dark:text-red-400">
             Wystąpił błąd: {error}
@@ -111,14 +38,22 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Spróbuj odświeżyć stronę lub wybierz inne województwo.
           </p>
+          <button 
+            onClick={refetch}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            aria-label="Spróbuj ponownie pobrać dane"
+          >
+            Spróbuj ponownie
+          </button>
         </div>
       </div>
     );
   }
 
+  // Renderowanie braku danych
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center" role="status">
         <div className="text-center p-4">
           <p className="text-gray-500 dark:text-gray-400">
             Brak danych dla województwa {selectedRegion}
@@ -127,24 +62,23 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
       </div>
     );
   }
-
-  const chartData = useMock ? mockData : data;
   
   return (
     <div className="w-full h-full">
-      {useMock && (
-        <div className="mb-2 p-2 text-sm text-yellow-600 bg-yellow-100 rounded dark:bg-yellow-900 dark:text-yellow-300">
-          Używamy danych przykładowych. Dane z API są niedostępne.
-        </div>
-      )}
-      <ResponsiveContainer width="100%" height={useMock ? "90%" : "100%"}>
-        <LineChart data={chartData}>
+      {/* Wykres trendów */}
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="year" />
-          <YAxis />
+          <XAxis 
+            dataKey="year" 
+            label={{ value: 'Rok', position: 'insideBottomRight', offset: -10 }}
+          />
+          <YAxis 
+            label={{ value: 'Liczba rozwodów', angle: -90, position: 'insideLeft' }}
+          />
           <Tooltip />
           <Legend />
-          {Object.keys(chartData[0])
+          {Object.keys(data[0])
             .filter(key => key !== "year")
             .map((key) => (
               <Line
@@ -154,6 +88,8 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
                 stroke={key === "ŚREDNIA KRAJOWA" ? "#888" : "#ff0000"}
                 strokeWidth={key === "ŚREDNIA KRAJOWA" ? 1 : 2}
                 dot
+                activeDot={{ r: 8 }}
+                name={key}
               />
             ))}
         </LineChart>
@@ -162,4 +98,5 @@ const DivorceTrends: React.FC<DivorceTrendsProps> = ({ selectedRegion }) => {
   );
 };
 
-export default DivorceTrends;
+// Optymalizacja renderowania - komponent zmienia się tylko przy zmianie regionu
+export default React.memo(DivorceTrends);

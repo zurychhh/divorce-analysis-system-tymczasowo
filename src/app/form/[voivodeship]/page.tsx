@@ -3,9 +3,20 @@
 import React, { useState } from 'react'
 import DivorceForm from '@/components/form/DivorceForm'
 import DivorceFormDetailed from '@/components/form/DivorceFormDetailed'
-import SimpleTrends from '@/components/form/SimpleTrends'
-import DivorceTrends from '@/components/form/DivorceTrends'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button"
+
+// Proste dane statyczne do wykresu
+const chartData = [
+  { year: "2015", "Rozwody": 1500, "Średnia krajowa": 1200 },
+  { year: "2016", "Rozwody": 1550, "Średnia krajowa": 1250 },
+  { year: "2017", "Rozwody": 1600, "Średnia krajowa": 1300 },
+  { year: "2018", "Rozwody": 1650, "Średnia krajowa": 1350 },
+  { year: "2019", "Rozwody": 1700, "Średnia krajowa": 1400 },
+  { year: "2020", "Rozwody": 1750, "Średnia krajowa": 1450 },
+  { year: "2021", "Rozwody": 1800, "Średnia krajowa": 1500 },
+  { year: "2022", "Rozwody": 1850, "Średnia krajowa": 1550 },
+];
 
 export default function FormPage({ params }: { params: { voivodeship: string } }) {
   const { voivodeship } = params
@@ -75,16 +86,32 @@ export default function FormPage({ params }: { params: { voivodeship: string } }
           </span>
         </h1>
         
-        {/* Testowe wykresy */}
-        <div className="w-full space-y-8">
-          {/* Prosty testowy wykres */}
-          <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg p-4 overflow-hidden border-2 border-blue-500">
-            <SimpleTrends />
-          </div>
-          
-          {/* Właściwy wykres rozwodów - dodany dla porównania */}
-          <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg p-4 overflow-hidden border-2 border-red-500">
-            <DivorceTrends selectedRegion={decodedVoivodeship} />
+        {/* Bezpośredni wykres bez użycia DivorceTrends */}
+        <div className="w-full h-96 bg-white dark:bg-gray-800 rounded-lg p-4 overflow-hidden">
+          <h3 className="text-lg font-medium mb-4 text-center">Trendy rozwodowe - {decodedVoivodeship}</h3>
+          <div style={{ width: '100%', height: '90%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="Rozwody"
+                  stroke="#ff0000"
+                  strokeWidth={2}
+                  activeDot={{ r: 8 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Średnia krajowa"
+                  stroke="#888"
+                  strokeWidth={1}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
         
