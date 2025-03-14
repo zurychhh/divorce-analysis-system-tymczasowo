@@ -5,43 +5,25 @@ interface UseGUSDataProps {
  dataType: "divorceByRegion" | "marriageDuration";
 }
 
-const MOCK_DATA = {
- divorceByRegion: {
-   data: [
-     { id: "dolnoslaskie", name: "Dolnośląskie", divorceCount: 1200 },
-     { id: "mazowieckie", name: "Mazowieckie", divorceCount: 2100 }
-   ],
-   average: 1650
- }
-};
-
-const USE_MOCK = true; // Zmiana na true do celów rozwojowych
+// Usuwamy definicję MOCK_DATA oraz flagę USE_MOCK
 
 const useGUSData = ({ dataType }: UseGUSDataProps) => {
  const [data, setData] = useState(null);
  const [loading, setLoading] = useState(true);
- const [error, setError] = useState(null);
+ const [error, setError] = useState<Error | null>(null);
 
  useEffect(() => {
    const getData = async () => {
      try {
-       if (USE_MOCK) {
-         setTimeout(() => {
-           setData(MOCK_DATA[dataType]);
-           setLoading(false);
-         }, 1000);
-         return;
-       }
-
+       // Zawsze próbujemy pobrać prawdziwe dane
        const result = await fetchGUSData(dataType);
        setData(result);
        setLoading(false);
      } catch (err) {
        console.error("Error fetching GUS data:", err);
-       setError(err);
+       setError(err as Error);
+       setData(null); // Explicitly set to null rather than undefined
        setLoading(false);
-       // Fallback do danych mockowych w przypadku błędu
-       setData(MOCK_DATA[dataType]);
      }
    };
 
