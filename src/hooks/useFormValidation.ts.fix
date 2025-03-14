@@ -1,9 +1,8 @@
-// src/hooks/useFormValidation.ts.fix2
 import { useState, useCallback, useEffect } from 'react';
 
 /**
  * Custom hook do walidacji formularza
- * Naprawiona wersja z poprawnym eksportem
+ * Naprawiona wersja bez aktualizacji stanu podczas renderowania
  */
 export function useFormValidation<T extends Record<string, any>>(
   initialData: T,
@@ -13,7 +12,7 @@ export function useFormValidation<T extends Record<string, any>>(
   onUpdateCallback?: (data: Partial<T>) => void
 ) {
   const [formData, setFormData] = useState<T>(initialData);
-  const [errors, setErrors] = useState<Record<string, string | null>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [pendingUpdates, setPendingUpdates] = useState<Partial<T>>({});
 
@@ -44,7 +43,7 @@ export function useFormValidation<T extends Record<string, any>>(
   );
 
   const validateAll = useCallback(() => {
-    const newErrors: Record<string, string | null> = {};
+    const newErrors: Record<string, string> = {};
     let isValid = true;
 
     Object.keys(formData).forEach((key) => {
@@ -109,6 +108,3 @@ export function useFormValidation<T extends Record<string, any>>(
     resetForm
   };
 }
-
-// Upewnij się, że funkcja jest eksportowana jako default (dla kompatybilności z istniejącymi importami)
-export default useFormValidation;

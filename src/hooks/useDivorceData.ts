@@ -1,4 +1,6 @@
+// src/hooks/useDivorceData.ts.fix
 import { useState, useEffect, useCallback } from 'react';
+import { errorLogger } from '@/lib/errorLogger';
 
 // Typy danych
 interface DivorceDataPoint {
@@ -24,20 +26,13 @@ interface UseDivorceDataReturn {
   data: DivorceDataPoint[] | null;
   status: DataStatus;
   error: string | null;
+  useMock: boolean;
   refetch: () => Promise<void>;
 }
 
-// Cache dla danych
-const dataCache: Record<string, {
-  data: DivorceDataPoint[];
-  timestamp: number;
-}> = {};
-
-// Czas ważności cache (15 minut)
-const CACHE_TTL = 15 * 60 * 1000;
-
 /**
  * Custom hook do pobierania danych o rozwodach dla wybranego regionu
+ * Zoptymalizowana wersja - priorytetyzuje dane produkcyjne
  * 
  * @param region Nazwa województwa
  * @returns Obiekt z danymi, statusem, błędem i funkcją odświeżającą dane
@@ -46,6 +41,7 @@ export function useDivorceData(region: string): UseDivorceDataReturn {
   const [data, setData] = useState<DivorceDataPoint[] | null>(null);
   const [status, setStatus] = useState<DataStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [useMock, setUseMock] = useState<boolean>(false);
   
   const fetchData = useCallback(async () => {
     if (!region) {
@@ -53,28 +49,28 @@ export function useDivorceData(region: string): UseDivorceDataReturn {
       return;
     }
 
-    // Sprawdź czy mamy dane w cache i czy są aktualne
-    const cacheKey = region.toLowerCase();
-    const cachedData = dataCache[cacheKey];
-    if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-      console.log('Używam danych z cache dla regionu:', region);
-      setData(cachedData.data);
-      setStatus('success');
-      return;
-    }
-
-    console.log(`Pobieranie danych dla regionu: ${region}`);
+    console.log(`Pobieranie produkcyjnych danych dla regionu: ${region}`);
     setStatus('loading');
     setError(null);
+    setUseMock(false);
 
     try {
-      // Dodajemy parametry do zapytania
+      // Dodajemy parametry do zapytania i logujemy dokładny URL
       const params = new URLSearchParams({
         region: region.toLowerCase(),
-        years: '8' // ostatnie 8 lat
       });
       
-      const response = await fetch(`/api/gus?${params}`);
+      const url = `/api/gus?${params}`;
+      console.log('Wykonuję zapytanie API:', url);
+      
+      const response = await fetch(url, {
+        // Ustawiamy timeout i cache control
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+        cache: 'no-store',
+      });
+      
       console.log('Status odpowiedzi API:', response.status);
       
       if (!response.ok) {
@@ -94,7 +90,7 @@ export function useDivorceData(region: string): UseDivorceDataReturn {
             // Znajdź dane dla wybranego regionu
             const normalizedRegion = region.toUpperCase();
             const regionData = Object.values(responseData.data || {})
-              .find((r: any) => r.name?.toUpperCase() === normalizedRegion);
+              .find((r: any) => r.name?.toUpperCase().includes(normalizedRegion));
 
             if (regionData) {
               // Dodaj dane dla wybranego regionu
@@ -111,26 +107,36 @@ export function useDivorceData(region: string): UseDivorceDataReturn {
                 );
                 yearData['ŚREDNIA KRAJOWA'] = average;
               }
+            } else {
+              console.warn(`Nie znaleziono danych dla regionu ${normalizedRegion} w roku ${year}`);
             }
 
             return yearData;
           });
 
         console.log('Przygotowane dane wykresu:', chartData);
-        setData(chartData);
-        setStatus('success');
         
-        // Zapisz dane w cache
-        dataCache[cacheKey] = { 
-          data: chartData, 
-          timestamp: Date.now() 
-        };
+        if (chartData.length > 0 && Object.keys(chartData[0]).length > 1) {
+          setData(chartData);
+          setStatus('success');
+          return;
+        } else {
+          console.warn("Otrzymano puste dane z API, mimo statusu success");
+          throw new Error("Otrzymano puste dane z API");
+        }
       } else {
         throw new Error(responseData.message || 'Nieznany błąd API');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Nieznany błąd';
       console.error('Błąd pobierania danych:', errorMessage);
+      
+      // Loguj błąd w systemie
+      errorLogger.error(`Błąd pobierania danych dla regionu ${region}`, {
+        error: errorMessage,
+        region
+      });
+      
       setError(errorMessage);
       setStatus('error');
     }
@@ -141,5 +147,5 @@ export function useDivorceData(region: string): UseDivorceDataReturn {
     fetchData();
   }, [fetchData]);
 
-  return { data, status, error, refetch: fetchData };
+  return { data, status, error, useMock, refetch: fetchData };
 }
